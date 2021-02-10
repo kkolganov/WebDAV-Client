@@ -244,5 +244,67 @@ namespace WebDav.Client.Tests.WebDavClientTests
             await dispatcher.Received(1)
                 .Send(Arg.Any<Uri>(), WebDavMethod.Propfind, Arg.Is(Predicates.CompareRequestContent(expectedContent)), CancellationToken.None);
         }
+
+        [Fact]
+        public async void When_NamedRequestIsCalled_Should_SendPropRequest()
+        {
+            const string expectedContent =
+                @"<?xml version=""1.0"" encoding=""utf-8""?>
+<D:propfind xmlns:D=""DAV:"">
+  <D:prop xmlns:P1=""http://p1.example.com"">
+    <D:displayname />
+    <P1:myprop1 />
+  </D:prop>
+</D:propfind>";
+            var dispatcher = Dispatcher.Mock();
+            var client = new WebDavClient().SetWebDavDispatcher(dispatcher);
+
+            await client.Propfind("http://example.com", new PropfindParameters
+            {
+                RequestType = PropfindRequestType.NamedProperties,
+                CustomProperties = new XName[] { "{DAV:}displayname", "{http://p1.example.com}myprop1" },
+                Namespaces = new[] { new NamespaceAttr("P1", "http://p1.example.com") }
+            });
+            await dispatcher.Received(1)
+                .Send(Arg.Any<Uri>(), WebDavMethod.Propfind, Arg.Is(Predicates.CompareRequestContent(expectedContent)), CancellationToken.None);
+        }
+
+        [Fact]
+        public async void Issue30()
+        {
+            const string expectedContent =
+                @"<?xml version=""1.0"" encoding=""utf-8""?>
+<D:propfind xmlns:D=""DAV:"">
+  <D:prop xmlns:oc=""http://owncloud.org/ns"" xmlns:nc=""http://nextcloud.org/ns"">
+    <D:getlastmodified />
+    <oc:fileid />
+    <oc:permissions />
+    <oc:size />
+    <oc:owner-display-name />
+    <nc:mount-type />
+  </D:prop>
+</D:propfind>";
+            var dispatcher = Dispatcher.Mock();
+            var client = new WebDavClient().SetWebDavDispatcher(dispatcher);
+
+            await client.Propfind("http://example.com", new PropfindParameters
+            {
+                RequestType = PropfindRequestType.NamedProperties,
+                CustomProperties = new XName[] {
+                    "{DAV:}getlastmodified",
+                    "{http://owncloud.org/ns}fileid",
+                    "{http://owncloud.org/ns}permissions",
+                    "{http://owncloud.org/ns}size",
+                    "{http://owncloud.org/ns}owner-display-name",
+                    "{http://nextcloud.org/ns}mount-type"
+                },
+                Namespaces = new[] {
+                    new NamespaceAttr("oc", "http://owncloud.org/ns"),
+                    new NamespaceAttr("nc", "http://nextcloud.org/ns")
+                }
+            });
+            await dispatcher.Received(1)
+                .Send(Arg.Any<Uri>(), WebDavMethod.Propfind, Arg.Is(Predicates.CompareRequestContent(expectedContent)), CancellationToken.None);
+        }
     }
 }

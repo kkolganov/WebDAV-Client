@@ -14,10 +14,18 @@ namespace WebDav
         /// </summary>
         public PropfindParameters()
         {
+            RequestType = PropfindRequestType.AllProperties;
             CustomProperties = new List<XName>();
             Namespaces = new List<NamespaceAttr>();
             CancellationToken = CancellationToken.None;
         }
+
+        /// <summary>
+        /// Gets or sets a type of PROPFIND request.
+        /// AllProperties: 'allprop' + 'include'.
+        /// NamedProperties: 'prop'.
+        /// </summary>
+        public PropfindRequestType RequestType { get; set; }
 
         /// <summary>
         /// Gets or sets the collection of custom properties (or dead properties in terms of WebDav).

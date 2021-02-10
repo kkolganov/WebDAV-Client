@@ -114,8 +114,12 @@ namespace WebDav
             {
                 new KeyValuePair<string, string>("Depth", DepthHeaderHelper.GetValueForPropfind(applyTo))
             };
-            string requestBody = PropfindRequestBuilder.BuildRequestBody(parameters.CustomProperties, parameters.Namespaces);
-            var requestParams = new RequestParameters { Headers = headers, Content = new StringContent(requestBody, DefaultEncoding, MediaTypeXml) };
+
+            HttpContent requestContent = parameters.RequestType != PropfindRequestType.AllPropertiesImplied
+                ? new StringContent(PropfindRequestBuilder.BuildRequestBody(parameters.RequestType, parameters.CustomProperties, parameters.Namespaces), DefaultEncoding, MediaTypeXml)
+                : null;
+
+            var requestParams = new RequestParameters {Headers = headers, Content = requestContent, ContentType = MediaTypeXml };
             var response = await _dispatcher.Send(requestUri, WebDavMethod.Propfind, requestParams, parameters.CancellationToken);
             var responseContent = await ReadContentAsString(response.Content).ConfigureAwait(false);
             return _propfindResponseParser.Parse(responseContent, response.StatusCode, response.Description);
